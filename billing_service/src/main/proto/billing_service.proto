@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+// THIS IS THE JAVA PACKAGE NAME FOR THE GENERATED CODE, IT HELPS TO ORGANIZE THE CODE IN A STRUCTURED WAY
+option java_multiple_files = true;
+option java_package = "org.example";
+
+/**
+THIS IS THE PROTOBUF DEFINITION FOR THE BILLING SERVICE,
+   IT DEFINES THE SERVICE AND THE MESSAGES USED FOR COMMUNICATION
+   BETWEEN THE BILLING SERVICE AND OTHER SERVICES (LIKE THE API GATEWAY).
+ */
+service BillingService {
+  rpc CreateBillingAccount (BillingRequest) returns (BillingResponse);
+}
+
+// THIS IS LIKE DTO, IT'S THE DATA STRUCTURE THAT WE'LL USE TO TRANSFER DATA BETWEEN SERVICES
+message BillingRequest {
+  string patientId = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message BillingResponse {
+  string billingAccountId = 1;
+  string status = 2;
+}
