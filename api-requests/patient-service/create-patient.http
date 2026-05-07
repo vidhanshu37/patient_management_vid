@@ -4,7 +4,7 @@ Content-Type: application/json
 
 {
   "name": "John Doe kafka-demo",
-  "email": "test_billing_account456@gmail.com",
+  "email": "test_kafka_account456@gmail.com",
   "address": "123 Main St, Anytown, USA",
   "dateOfBirth": "1990-01-01",
   "registeredDate": "2024-06-01"
