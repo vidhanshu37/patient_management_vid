@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="patient_service" />
         <module name="auth_service" />
+        <module name="api_gateway" />
         <module name="analytics_service" />
         <module name="billing_service" />
       </profile>
@@ -16,6 +17,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="analytics_service" options="-parameters" />
+      <module name="api_gateway" options="-parameters" />
       <module name="auth_service" options="-parameters" />
       <module name="billing_service" options="-parameters" />
       <module name="patient_service" options="-parameters" />

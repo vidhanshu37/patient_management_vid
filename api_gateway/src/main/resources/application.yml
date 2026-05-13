@@ -7,6 +7,15 @@ spring:
       server:
         webflux:
           routes:
+            ## http://localhost:4004/auth/login -> http://auth-service:4005/login
+            - id: auth-service-route
+              uri: http://auth-service:4005
+              predicates:
+                - Path=/auth/**
+              filters:
+                - StripPrefix=1
+
+
               ## REST CLIENT -> http://localhost:4004/api/patients
               ## API GATEWAY -> http://patient-service:4000/patients
             - id: patient-service-route
@@ -16,6 +25,7 @@ spring:
               filters:
                 ## This filter removes the first segment of the path, so that the request to http://localhost:4004/api/patients/1 will be forwarded to http://patient-service:4000/patients/1 instead of http://patient-service:4000/api/patients/1
                 - StripPrefix=1
+                - JwtValidation # (<JwtValidation> name should be match with GatewayFilterFactory.java class)This is a custom filter that validates the JWT token in the Authorization header of the request. You can implement this filter to check if the token is valid and has the required permissions to access the patient service.
 
               ## REST-CLIENT -> http://localhost:4004/api-docs/patients
               ## API GATEWAY -> http://patient-service:4000/v3/api-docs
