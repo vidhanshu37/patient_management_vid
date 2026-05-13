@@ -39,4 +39,30 @@ public class AuthIntegrationTest {
 
         System.out.println("Response: " + response.jsonPath().getString("token"));
     }
+
+    @Test
+    public void shouldReturnUnauthorizedOnInvalidLogin() {
+        // 1. Arrange
+        // 2. Act
+        // 3. Assert
+
+        String loginPayload = """
+                {
+                    "email": "invalid_test_email@test.com",
+                    "password": "Unauthorized"
+                }
+                """;
+
+
+        // build HTTP request
+        given() // 1. Arrange (import from - RestAssured.given)
+            .contentType("application/json")
+            .body(loginPayload)
+            .when() // 2. Act
+            .post("/auth/login")
+            .then() // 3. Assert
+            .statusCode(401);
+
+
+    }
 }
