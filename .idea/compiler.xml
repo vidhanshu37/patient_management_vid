@@ -10,6 +10,7 @@
         <module name="auth_service" />
         <module name="api_gateway" />
         <module name="analytics_service" />
+        <module name="integration-tests" />
         <module name="billing_service" />
       </profile>
     </annotationProcessing>
