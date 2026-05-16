@@ -20,22 +20,22 @@ This is a **learning-focused, production-inspired** backend project. Rather than
 
 ```
                         ┌─────────────────────────────┐
-                        │         API Gateway          │
-                        │   (JWT Auth + Routing)       │
+                        │         API Gateway         │
+                        │   (JWT Auth + Routing)      │
                         └──────────────┬──────────────┘
                                        │
               ┌────────────────────────┼───────────────────────┐
-              │                        │                        │
+              │                        │                       │
     ┌─────────▼──────┐     ┌──────────▼──────┐     ┌──────────▼──────┐
-    │ Patient Service │     │  Auth Service    │     │ Billing Service  │
-    │  (REST + Kafka) │     │  (JWT tokens)    │     │    (gRPC)        │
-    └─────────┬───────┘     └──────────────────┘     └─────────────────┘
+    │Patient Service │     │  Auth Service   │     │ Billing Service │
+    │  (REST + Kafka)│     │  (JWT tokens)   │     │    (gRPC)       │
+    └─────────┬──────┘     └─────────────────┘     └─────────────────┘
               │
               │ Kafka Event
               ▼
     ┌──────────────────┐
-    │ Analytics Service │
-    │  (Kafka Consumer) │
+    │ Analytics Service│
+    │  (Kafka Consumer)│
     └──────────────────┘
 ```
 
