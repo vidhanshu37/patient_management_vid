@@ -1,20 +1,42 @@
 package org.example.stack;
 
-import software.amazon.awscdk.*;
-import software.amazon.awscdk.services.ec2.*;
-import software.amazon.awscdk.services.ec2.InstanceType;
-import software.amazon.awscdk.services.ecs.Protocol;
-import software.amazon.awscdk.services.ecs.*;
-import software.amazon.awscdk.services.logs.LogGroup;
-import software.amazon.awscdk.services.logs.RetentionDays;
-import software.amazon.awscdk.services.msk.CfnCluster;
-import software.amazon.awscdk.services.rds.*;
-import software.amazon.awscdk.services.route53.CfnHealthCheck;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import software.amazon.awscdk.App;
+import software.amazon.awscdk.AppProps;
+import software.amazon.awscdk.BootstraplessSynthesizer;
+import software.amazon.awscdk.Duration;
+import software.amazon.awscdk.RemovalPolicy;
+import software.amazon.awscdk.Stack;
+import software.amazon.awscdk.StackProps;
+import software.amazon.awscdk.Token;
+import software.amazon.awscdk.services.ec2.ISubnet;
+import software.amazon.awscdk.services.ec2.InstanceClass;
+import software.amazon.awscdk.services.ec2.InstanceSize;
+import software.amazon.awscdk.services.ec2.InstanceType;
+import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.ecs.AwsLogDriverProps;
+import software.amazon.awscdk.services.ecs.CloudMapNamespaceOptions;
+import software.amazon.awscdk.services.ecs.Cluster;
+import software.amazon.awscdk.services.ecs.ContainerDefinitionOptions;
+import software.amazon.awscdk.services.ecs.ContainerImage;
+import software.amazon.awscdk.services.ecs.FargateService;
+import software.amazon.awscdk.services.ecs.FargateTaskDefinition;
+import software.amazon.awscdk.services.ecs.LogDriver;
+import software.amazon.awscdk.services.ecs.PortMapping;
+import software.amazon.awscdk.services.ecs.Protocol;
+import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFargateService;
+import software.amazon.awscdk.services.logs.LogGroup;
+import software.amazon.awscdk.services.logs.RetentionDays;
+import software.amazon.awscdk.services.msk.CfnCluster;
+import software.amazon.awscdk.services.rds.Credentials;
+import software.amazon.awscdk.services.rds.DatabaseInstance;
+import software.amazon.awscdk.services.rds.DatabaseInstanceEngine;
+import software.amazon.awscdk.services.rds.PostgresEngineVersion;
+import software.amazon.awscdk.services.rds.PostgresInstanceEngineProps;
+import software.amazon.awscdk.services.route53.CfnHealthCheck;
 
 // Sets up a local AWS environment using LocalStack for testing and development purposes and create Database instance.
 public class LocalStack extends Stack {
@@ -56,13 +78,59 @@ public class LocalStack extends Stack {
         patientService.getNode().addDependency(patientServiceDb);
         patientService.getNode().addDependency(billingService);
         patientService.getNode().addDependency(mskCluster);
+
+        createApiGatewayService();
+    }
+
+    private void createApiGatewayService() {
+        FargateTaskDefinition taskDefinition =
+                FargateTaskDefinition.Builder.create(this, "APIGatewayTaskDefinition")
+                        .cpu(256)
+                        .memoryLimitMiB(512)
+                        .build();
+
+        ContainerDefinitionOptions containerOptions =
+                ContainerDefinitionOptions.builder()
+                        .image(ContainerImage.fromRegistry("api-gateway"))
+                        .environment(Map.of(
+                                "SPRING_PROFILES_ACTIVE", "prod",
+                                "AUTH_SERVICE_URL", "http://host.docker.internal:4005"
+                        ))
+                        .portMappings(List.of(4004).stream()
+                                .map(port -> PortMapping.builder()
+                                        .containerPort(port)
+                                        .hostPort(port)
+                                        .protocol(Protocol.TCP)
+                                        .build())
+                                .toList())
+                        .logging(LogDriver.awsLogs(AwsLogDriverProps.builder()
+                                .logGroup(LogGroup.Builder.create(this, "ApiGatewayLogGroup")
+                                        .logGroupName("/ecs/api-gateway")
+                                        .removalPolicy(RemovalPolicy.DESTROY)
+                                        .retention(RetentionDays.ONE_DAY)
+                                        .build())
+                                .streamPrefix("api-gateway")
+                                .build()))
+                        .build();
+
+
+        taskDefinition.addContainer("APIGatewayContainer", containerOptions);
+
+        ApplicationLoadBalancedFargateService apiGateway =
+                ApplicationLoadBalancedFargateService.Builder.create(this, "APIGatewayService")
+                        .cluster(ecsCluster)
+                        .serviceName("api-gateway")
+                        .taskDefinition(taskDefinition)
+                        .desiredCount(1)
+                        .healthCheckGracePeriod(Duration.seconds(60))
+                        .build();
     }
 
     private Cluster createEcsCluster() {
         return Cluster.Builder.create(this, "PatientManagementCluster")
                 .vpc(vpc)
                 .defaultCloudMapNamespace(CloudMapNamespaceOptions.builder()
-                        .name("Patient-management.local").build())
+                        .name("patient-management.local").build())
                 .build();
     }
 
@@ -138,7 +206,7 @@ public class LocalStack extends Stack {
                                 .removalPolicy(RemovalPolicy.DESTROY)
                                 .retention(RetentionDays.ONE_DAY)
                                 .build())
-                                .streamPrefix(imageName)
+                        .streamPrefix(imageName)
                         .build()));
 
         Map<String, String> envVars = new HashMap<>();
