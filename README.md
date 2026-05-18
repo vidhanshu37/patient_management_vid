@@ -91,7 +91,6 @@ All external traffic is routed through a central **API Gateway** which validates
 
 ### System Architecture Diagram
 
-![img_1.png](img_1.png)
 
 ```mermaid
 graph TB
